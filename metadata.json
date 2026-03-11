@@ -1,0 +1,5 @@
+{
+  "name": "Farmer Direct Market",
+  "description": "A direct-to-customer marketplace for farmers to sell harvested vegetables.",
+  "requestFramePermissions": ["camera"]
+}

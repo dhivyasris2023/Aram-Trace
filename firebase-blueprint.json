@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "farmer": {
+      "title": "Farmer",
+      "description": "A farmer user in the system",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Farmer's full name" },
+        "mobile": { "type": "string", "description": "Farmer's mobile number (unique ID)" },
+        "pin": { "type": "string", "description": "4-digit PIN for login" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "mobile", "pin"]
+    },
+    "item": {
+      "title": "Vegetable Item",
+      "description": "A vegetable item listed by a farmer",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string", "description": "UID of the farmer" },
+        "farmerName": { "type": "string", "description": "Name of the farmer" },
+        "name": { "type": "string", "description": "Vegetable name" },
+        "quantity": { "type": "number", "description": "Quantity in KG" },
+        "price": { "type": "number", "description": "Price per KG" },
+        "cultivationDate": { "type": "string", "format": "date" },
+        "location": { "type": "string", "description": "Farm location" },
+        "photoUrl": { "type": "string", "description": "URL or base64 of the photo" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "soldCount": { "type": "number", "description": "Total quantity sold" }
+      },
+      "required": ["farmerId", "name", "quantity", "price", "cultivationDate", "location"]
+    },
+    "sale": {
+      "title": "Sale Record",
+      "description": "A record of a purchase by a customer",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "description": "ID of the item sold" },
+        "farmerId": { "type": "string", "description": "ID of the farmer" },
+        "customerName": { "type": "string", "description": "Customer's name" },
+        "customerMobile": { "type": "string", "description": "Customer's mobile" },
+        "quantity": { "type": "number", "description": "Quantity purchased" },
+        "totalPrice": { "type": "number", "description": "Total price paid" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["itemId", "farmerId", "customerName", "quantity", "totalPrice", "date"]
+    }
+  },
+  "firestore": {
+    "/farmers/{farmerId}": {
+      "schema": "farmer",
+      "description": "Farmer profiles"
+    },
+    "/items/{itemId}": {
+      "schema": "item",
+      "description": "Vegetable listings"
+    },
+    "/sales/{saleId}": {
+      "schema": "sale",
+      "description": "Sales transactions"
+    }
+  }
+}

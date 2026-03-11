@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: farmers
+    // Document ID: mobile number (string)
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - mobile: string (required, 10 chars)
+    //   - pin: string (required, 4 chars)
+    //   - createdAt: string (required, ISO 8601)
+    //
+    // Collection: items
+    // Document ID: auto-generated
+    // Fields:
+    //   - farmerId: string (required, matches farmer mobile)
+    //   - farmerName: string (required)
+    //   - name: string (required)
+    //   - quantity: number (required, positive)
+    //   - price: number (required, positive)
+    //   - cultivationDate: string (required)
+    //   - location: string (required)
+    //   - photoUrl: string (optional)
+    //   - createdAt: string (required)
+    //   - soldCount: number (required)
+    //
+    // Collection: sales
+    // Document ID: auto-generated
+    // Fields:
+    //   - itemId: string (required)
+    //   - farmerId: string (required)
+    //   - customerName: string (required)
+    //   - customerMobile: string (required)
+    //   - quantity: number (required)
+    //   - totalPrice: number (required)
+    //   - date: string (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    function isValidFarmer(data) {
+      return hasRequiredFields(data, ['name', 'mobile', 'pin', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.mobile is string && data.mobile.size() == 10 &&
+             data.pin is string && data.pin.size() == 4 &&
+             data.createdAt is string;
+    }
+
+    function isValidItem(data) {
+      return hasRequiredFields(data, ['farmerId', 'farmerName', 'name', 'quantity', 'price', 'cultivationDate', 'location', 'createdAt', 'soldCount']) &&
+             data.farmerId is string && data.farmerId.size() == 10 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             data.location is string && data.location.size() <= 100 &&
+             data.quantity is number && data.quantity >= 0 &&
+             data.price is number && data.price >= 0 &&
+             data.soldCount is number;
+    }
+
+    function isValidSale(data) {
+      return hasRequiredFields(data, ['itemId', 'farmerId', 'customerName', 'customerMobile', 'quantity', 'totalPrice', 'date']) &&
+             data.itemId is string &&
+             data.farmerId is string && data.farmerId.size() == 10 &&
+             data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+             data.customerMobile is string && data.customerMobile.size() >= 10 && data.customerMobile.size() <= 15 &&
+             data.quantity is number && data.quantity > 0 &&
+             data.totalPrice is number && data.totalPrice >= 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Farmer profiles
+    match /farmers/{farmerId} {
+      // Allow creation during registration
+      allow create: if isValidFarmer(request.resource.data) && request.resource.id == request.resource.data.mobile;
+      
+      // Allow reading for login verification and public profile
+      allow read: if true;
+      
+      // Allow update if PIN matches (basic verification for custom session)
+      allow update: if isValidFarmer(request.resource.data) && request.resource.data.pin == resource.data.pin;
+    }
+
+    // Vegetable Items
+    match /items/{itemId} {
+      allow read: if true; // Public for customers
+      allow create: if isValidItem(request.resource.data);
+      // Basic check: farmerId must match
+      allow update: if isValidItem(request.resource.data) && request.resource.data.farmerId == resource.data.farmerId;
+      allow delete: if true; 
+    }
+
+    // Sales Transactions
+    match /sales/{saleId} {
+      allow create: if isValidSale(request.resource.data);
+      allow read: if true; // Farmers filter by their ID in the app
+      allow update, delete: if false;
+    }
+  }
+}
